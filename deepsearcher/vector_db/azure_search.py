@@ -36,6 +36,7 @@ class AzureSearch(BaseVectorDB):
             endpoint=self.endpoint, credential=AzureKeyCredential(self.api_key)
         )
 
+        # 创建索引（为与旧版SDK兼容而简化）
         # Create the index (simplified for compatibility with older SDK versions)
         fields = [
             SimpleField(name="id", type="Edm.String", key=True),
@@ -48,16 +49,19 @@ class AzureSearch(BaseVectorDB):
             ),
         ]
 
+        # 使用字段创建索引
         # Create index with fields
         index = SearchIndex(name=self.index_name, fields=fields)
 
         try:
+            # 尝试删除现有索引
             # Try to delete existing index
             try:
                 index_client.delete_index(self.index_name)
             except ResourceNotFoundError:
                 pass
 
+            # 创建索引
             # Create the index
             index_client.create_index(index)
         except Exception as e:
@@ -100,24 +104,29 @@ class AzureSearch(BaseVectorDB):
             credential=AzureKeyCredential(self.api_key),
         )
 
+        # 验证向量不为空
         # Validate that vector is not empty
         if not vector or len(vector) == 0:
             print("Error: Empty vector provided for search. Vector must have 1536 dimensions.")
             return []
 
+        # 调试向量和字段信息
         # Debug vector and field info
         print(f"Vector length for search: {len(vector)}")
         print(f"Vector field name: {self.vector_field}")
 
+        # 确保向量具有正确的维度
         # Ensure vector has the right dimensions
         if len(vector) != 1536:
             print(f"Warning: Vector length {len(vector)} does not match expected 1536 dimensions")
             return []
 
+        # 使用直接参数执行搜索 - 更简单的方法
         # Execute search with direct parameters - simpler approach
         try:
             print(f"Executing search with top_k={top_k}")
 
+            # 直接使用search_by_vector方法以确保兼容性
             # Directly use the search_by_vector method for compatibility
             body = {
                 "search": "*",
@@ -133,14 +142,17 @@ class AzureSearch(BaseVectorDB):
                 ],
             }
 
+            # 打印搜索请求主体以进行调试
             # Print the search request body for debugging
             print(f"Search request body: {body}")
 
+            # 直接使用REST API
             # Use the REST API directly
             result = search_client._client.documents.search_post(
                 search_request=body, headers={"api-key": self.api_key}
             )
 
+            # 格式化结果
             # Format results
             search_results = []
             if hasattr(result, "results"):
@@ -152,7 +164,8 @@ class AzureSearch(BaseVectorDB):
                         score = doc_dict.get("@search.score", 0.0)
 
                         result = RetrievalResult(
-                            embedding=[],  # We don't get the vectors back
+                            embedding=[],  # 我们无法获取向量
+                            # We don't get the vectors back
                             text=content,
                             reference=doc_id,
                             metadata={"source": doc_id},
@@ -166,15 +179,18 @@ class AzureSearch(BaseVectorDB):
         except Exception as e:
             print(f"Search error: {str(e)}")
 
+            # 如果第一个方法失败，则尝试另一种方法
             # Try another approach if the first one fails
             try:
                 print("Trying alternative search method...")
                 results = search_client.search(search_text="*", select=["id", "content"], top=top_k)
 
+                # 处理结果
                 # Process results
                 alt_results = []
                 for doc in results:
                     try:
+                        # 处理不同的结果格式
                         # Handle different result formats
                         if isinstance(doc, dict):
                             content = doc.get("content", "")

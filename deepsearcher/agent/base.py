@@ -4,6 +4,7 @@ from typing import Any, List, Tuple
 from deepsearcher.vector_db import RetrievalResult
 
 
+# 为类添加描述的装饰器函数
 def describe_class(description):
     """
     Decorator function to add a description to a class.
@@ -25,6 +26,7 @@ def describe_class(description):
     return decorator
 
 
+# DeepSearcher系统中所有代理的抽象基类
 class BaseAgent(ABC):
     """
     Abstract base class for all agents in the DeepSearcher system.
@@ -33,6 +35,7 @@ class BaseAgent(ABC):
     and invocation methods.
     """
 
+    # 初始化BaseAgent对象
     def __init__(self, **kwargs):
         """
         Initialize a BaseAgent object.
@@ -42,6 +45,7 @@ class BaseAgent(ABC):
         """
         pass
 
+    # 调用代理并返回结果
     def invoke(self, query: str, **kwargs) -> Any:
         """
         Invoke the agent and return the result.
@@ -55,6 +59,7 @@ class BaseAgent(ABC):
         """
 
 
+# 检索增强生成（RAG）代理的抽象基类
 class RAGAgent(BaseAgent):
     """
     Abstract base class for Retrieval-Augmented Generation (RAG) agents.
@@ -63,6 +68,7 @@ class RAGAgent(BaseAgent):
     retrieval and query methods.
     """
 
+    # 初始化RAGAgent对象
     def __init__(self, **kwargs):
         """
         Initialize a RAGAgent object.
@@ -72,6 +78,7 @@ class RAGAgent(BaseAgent):
         """
         pass
 
+    # 从知识库检索文档结果
     def retrieve(self, query: str, **kwargs) -> Tuple[List[RetrievalResult], int, dict]:
         """
         Retrieve document results from the knowledge base.
@@ -87,6 +94,7 @@ class RAGAgent(BaseAgent):
                 - any additional metadata, which can be an empty dictionary
         """
 
+    # 查询代理并返回答案
     def query(self, query: str, **kwargs) -> Tuple[str, List[RetrievalResult], int]:
         """
         Query the agent and return the answer.

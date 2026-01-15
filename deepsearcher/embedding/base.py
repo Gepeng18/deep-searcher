@@ -5,6 +5,7 @@ from tqdm import tqdm
 from deepsearcher.loader.splitter import Chunk
 
 
+# 嵌入模型实现的抽象基类
 class BaseEmbedding:
     """
     Abstract base class for embedding model implementations.
@@ -14,6 +15,7 @@ class BaseEmbedding:
     for the dimensionality of the embeddings.
     """
 
+    # 嵌入单个查询文本
     def embed_query(self, text: str) -> List[float]:
         """
         Embed a single query text.
@@ -26,6 +28,7 @@ class BaseEmbedding:
         """
         pass
 
+    # 嵌入文档文本列表
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         """
         Embed a list of document texts.
@@ -41,6 +44,7 @@ class BaseEmbedding:
         """
         return [self.embed_query(text) for text in texts]
 
+    # 嵌入Chunk对象的列表
     def embed_chunks(self, chunks: List[Chunk], batch_size: int = 256) -> List[Chunk]:
         """
         Embed a list of Chunk objects.
@@ -65,6 +69,7 @@ class BaseEmbedding:
             chunk.embedding = embedding
         return chunks
 
+    # 获取嵌入向量的维度
     @property
     def dimension(self) -> int:
         """

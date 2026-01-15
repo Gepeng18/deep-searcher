@@ -5,6 +5,7 @@ import requests
 
 from deepsearcher.embedding.base import BaseEmbedding
 
+# SiliconFlow模型维度映射
 SILICONFLOW_MODEL_DIM_MAP = {
     "BAAI/bge-m3": 1024,
     "netease-youdao/bce-embedding-base_v1": 768,
@@ -13,9 +14,11 @@ SILICONFLOW_MODEL_DIM_MAP = {
     "Pro/BAAI/bge-m3": 1024,  # paid model
 }
 
+# SiliconFlow嵌入API地址
 SILICONFLOW_EMBEDDING_API = "https://api.siliconflow.cn/v1/embeddings"
 
 
+# SiliconFlow嵌入模型实现
 class SiliconflowEmbedding(BaseEmbedding):
     """
     SiliconFlow embedding model implementation.
@@ -27,6 +30,7 @@ class SiliconflowEmbedding(BaseEmbedding):
     https://docs.siliconflow.cn/en/api-reference/embeddings/create-embeddings
     """
 
+    # 初始化SiliconFlow嵌入模型
     def __init__(self, model="BAAI/bge-m3", batch_size=32, **kwargs):
         """
         Initialize the SiliconFlow embedding model.
@@ -55,6 +59,7 @@ class SiliconflowEmbedding(BaseEmbedding):
         self.api_key = api_key
         self.batch_size = batch_size
 
+    # 嵌入单个查询文本
     def embed_query(self, text: str) -> List[float]:
         """
         Embed a single query text.
@@ -70,6 +75,7 @@ class SiliconflowEmbedding(BaseEmbedding):
         """
         return self._embed_input(text)[0]
 
+    # 嵌入文档文本列表
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         """
         Embed a list of document texts.
@@ -97,6 +103,7 @@ class SiliconflowEmbedding(BaseEmbedding):
             return self._embed_input(texts)
         return [self.embed_query(text) for text in texts]
 
+    # 处理嵌入输入的内部方法
     def _embed_input(self, input: Union[str, List[str]]) -> List[List[float]]:
         """
         Internal method to handle the API call for embedding inputs.
@@ -123,6 +130,7 @@ class SiliconflowEmbedding(BaseEmbedding):
         sorted_results = sorted(result, key=lambda x: x["index"])
         return [res["embedding"] for res in sorted_results]
 
+    # 获取当前模型嵌入向量的维度
     @property
     def dimension(self) -> int:
         """

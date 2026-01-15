@@ -9,6 +9,26 @@ from deepsearcher.utils import log
 from deepsearcher.vector_db import RetrievalResult
 from deepsearcher.vector_db.base import BaseVectorDB, deduplicate_results
 
+# 子查询生成提示词
+# 为了更全面地回答这个问题，请将原始问题拆解为最多四个子问题。请以字符串列表（list of str）的形式返回。
+# 如果这是一个非常简单的问题，无需拆解，则请在 Python 代码列表中仅保留原本的那个问题。
+#
+# 原始问题：{original_query}
+#
+#
+# <示例>
+# 输入示例：
+# "Explain deep learning"（解释深度学习）
+#
+# 输出示例：
+# [
+#     "What is deep learning?",
+#     "What is the difference between deep learning and machine learning?",
+#     "What is the history of deep learning?"
+# ]
+# </示例>
+#
+# 请以 Python 代码字符串列表的格式提供你的回答：
 SUB_QUERY_PROMPT = """To answer this question more comprehensively, please break down the original question into up to four sub-questions. Return as list of str.
 If this is a very simple question and no decomposition is necessary, then keep the only one original question in the python code list.
 
@@ -30,6 +50,13 @@ Example output:
 Provide your response in a python code list of str format:
 """
 
+# 重排序提示词
+# 请根据查询问题和检索到的文本片段，判断该片段是否有助于回答任何查询问题。请仅返回 "YES" 或 "NO"，不要包含任何其他信息。
+#
+# 查询问题：{query}
+# 检索到的片段：{retrieved_chunk}
+#
+# 该片段是否有助于回答上述任何问题？
 RERANK_PROMPT = """Based on the query questions and the retrieved chunk, to determine whether the chunk is helpful in answering any of the query question, you can only return "YES" or "NO", without any other information.
 
 Query Questions: {query}
@@ -39,6 +66,21 @@ Is the chunk helpful in answering the any of the questions?
 """
 
 
+# 反思提示词
+# 请根据原始查询、此前的子查询以及所有检索到的文档片段，判断是否需要执行额外的搜索查询。
+# 如果需要进一步研究，请提供一个包含最多 3 个搜索查询的 Python 列表。
+# 如果无需进一步研究，请返回一个空列表 `[]`。
+#
+# 注意：如果原始查询的要求是撰写报告，请倾向于生成更多后续查询，而非直接返回空列表。
+#
+# 原始查询：{question}
+#
+# 此前的子查询：{mini_questions}
+#
+# 相关文档片段：
+# {mini_chunk_str}
+#
+# 请仅以有效的字符串列表（List of str）格式回答，不要包含任何其他文本。
 REFLECT_PROMPT = """Determine whether additional search queries are needed based on the original query, previous sub queries, and all retrieved document chunks. If further research is required, provide a Python list of up to 3 search queries. If no further research is required, return an empty list.
 
 If the original query is to write a report, then you prefer to generate some further queries, instead return an empty list.
@@ -53,6 +95,15 @@ Related Chunks:
 Respond exclusively in valid List of str format without any other text."""
 
 
+# 总结提示词
+# 你是一位 AI 内容分析专家，擅长内容归纳与总结。请根据此前的查询以及检索到的文档片段，总结出一份具体且详尽的回答或报告。
+#
+# 原始查询：{question}
+#
+# 此前的子查询：{mini_questions}
+#
+# 相关文档片段：
+# {mini_chunk_str}
 SUMMARY_PROMPT = """You are a AI content analysis expert, good at summarizing content. Please summarize a specific and detailed answer or report based on the previous queries and the retrieved document chunks.
 
 Original Query: {question}
@@ -65,6 +116,7 @@ Related Chunks:
 """
 
 
+# 深度搜索代理实现
 @describe_class(
     "This agent is suitable for handling general and simple queries, such as given a topic and then writing a report, survey, or article."
 )
@@ -76,6 +128,7 @@ class DeepSearch(RAGAgent):
     multiple aspects of the query to provide comprehensive and detailed answers.
     """
 
+    # 初始化DeepSearch代理
     def __init__(
         self,
         llm: BaseLLM,
@@ -108,6 +161,7 @@ class DeepSearch(RAGAgent):
         )
         self.text_window_splitter = text_window_splitter
 
+    # 生成子查询
     def _generate_sub_queries(self, original_query: str) -> Tuple[List[str], int]:
         chat_response = self.llm.chat(
             messages=[
@@ -117,6 +171,7 @@ class DeepSearch(RAGAgent):
         response_content = self.llm.remove_think(chat_response.content)
         return self.llm.literal_eval(response_content), chat_response.total_tokens
 
+    # 从向量数据库搜索文档块
     async def _search_chunks_from_vectordb(self, query: str, sub_queries: List[str]):
         consume_tokens = 0
         if self.route_collection:
@@ -170,6 +225,7 @@ class DeepSearch(RAGAgent):
                 )
         return all_retrieved_results, consume_tokens
 
+    # 生成缺失查询
     def _generate_gap_queries(
         self, original_query: str, all_sub_queries: List[str], all_chunks: List[RetrievalResult]
     ) -> Tuple[List[str], int]:
@@ -184,6 +240,7 @@ class DeepSearch(RAGAgent):
         response_content = self.llm.remove_think(chat_response.content)
         return self.llm.literal_eval(response_content), chat_response.total_tokens
 
+    # 从知识库检索相关文档
     def retrieve(self, original_query: str, **kwargs) -> Tuple[List[RetrievalResult], int, dict]:
         """
         Retrieve relevant documents from the knowledge base for the given query.
@@ -203,26 +260,39 @@ class DeepSearch(RAGAgent):
         """
         return asyncio.run(self.async_retrieve(original_query, **kwargs))
 
+    # 异步检索相关文档
     async def async_retrieve(
         self, original_query: str, **kwargs
     ) -> Tuple[List[RetrievalResult], int, dict]:
+        # 获取最大迭代次数，如果未指定则使用默认值
         max_iter = kwargs.pop("max_iter", self.max_iter)
-        ### SUB QUERIES ###
+        ### 子查询生成阶段 ###
+        # 记录原始查询到日志
         log.color_print(f"<query> {original_query} </query>\n")
+        # 初始化所有搜索结果的累积列表
         all_search_res = []
+        # 初始化所有子查询的累积列表
         all_sub_queries = []
+        # 初始化总token消耗计数器
         total_tokens = 0
 
+        # 第一步：调用LLM将原始查询分解为多个子查询
         sub_queries, used_token = self._generate_sub_queries(original_query)
+        # 累加子查询生成的token消耗
         total_tokens += used_token
+        # 检查是否成功生成了子查询
         if not sub_queries:
+            # 如果没有生成子查询，记录警告并退出
             log.color_print("No sub queries were generated by the LLM. Exiting.")
             return [], total_tokens, {}
         else:
+            # 记录分解结果到日志
             log.color_print(
                 f"<think> Break down the original query into new sub queries: {sub_queries}</think>\n"
             )
+        # 将生成的子查询添加到累积列表中
         all_sub_queries.extend(sub_queries)
+        # 初始化当前迭代要处理的子查询列表
         sub_gap_queries = sub_queries
 
         for iter in range(max_iter):
@@ -230,13 +300,16 @@ class DeepSearch(RAGAgent):
             search_res_from_vectordb = []
             search_res_from_internet = []  # TODO
 
+            # 创建所有搜索任务
             # Create all search tasks
             search_tasks = [
                 self._search_chunks_from_vectordb(query, sub_gap_queries)
                 for query in sub_gap_queries
             ]
+            # 并行执行所有任务并等待结果
             # Execute all tasks in parallel and wait for results
             search_results = await asyncio.gather(*search_tasks)
+            # 合并所有结果
             # Merge all results
             for result in search_results:
                 search_res, consumed_token = result
@@ -268,6 +341,7 @@ class DeepSearch(RAGAgent):
         additional_info = {"all_sub_queries": all_sub_queries}
         return all_search_res, total_tokens, additional_info
 
+    # 查询代理并基于检索文档生成答案
     def query(self, query: str, **kwargs) -> Tuple[str, List[RetrievalResult], int]:
         """
         Query the agent and generate an answer based on retrieved documents.
@@ -312,6 +386,7 @@ class DeepSearch(RAGAgent):
             n_token_retrieval + chat_response.total_tokens,
         )
 
+    # 格式化块文本
     def _format_chunk_texts(self, chunk_texts: List[str]) -> str:
         chunk_str = ""
         for i, chunk in enumerate(chunk_texts):

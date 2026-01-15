@@ -266,6 +266,7 @@ class Qdrant(BaseVectorDB):
                 collection_infos.append(
                     CollectionInfo(
                         collection_name=collection.name,
+                        # Qdrant没有原生的描述字段
                         # Qdrant doesn't have a native description field
                         description=collection.name,
                     )

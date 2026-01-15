@@ -4,6 +4,7 @@ from typing import Dict, List
 from deepsearcher.llm.base import BaseLLM, ChatResponse
 
 
+# SiliconFlow语言模型实现
 class SiliconFlow(BaseLLM):
     """
     SiliconFlow language model implementation.
@@ -18,6 +19,7 @@ class SiliconFlow(BaseLLM):
         client: The OpenAI-compatible client instance for SiliconFlow API.
     """
 
+    # 初始化SiliconFlow语言模型客户端
     def __init__(self, model: str = "deepseek-ai/DeepSeek-R1", **kwargs):
         """
         Initialize a SiliconFlow language model client.
@@ -41,6 +43,7 @@ class SiliconFlow(BaseLLM):
             base_url = "https://api.siliconflow.cn/v1"
         self.client = OpenAI_(api_key=api_key, base_url=base_url, **kwargs)
 
+    # 向SiliconFlow模型发送聊天消息并获取响应
     def chat(self, messages: List[Dict]) -> ChatResponse:
         """
         Send a chat message to the SiliconFlow model and get a response.

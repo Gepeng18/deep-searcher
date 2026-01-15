@@ -3,6 +3,7 @@ import logging
 from termcolor import colored
 
 
+# 为日志消息添加颜色的自定义格式化器
 class ColoredFormatter(logging.Formatter):
     """
     A custom formatter for logging that adds colors to log messages.
@@ -22,6 +23,7 @@ class ColoredFormatter(logging.Formatter):
         "CRITICAL": "magenta",
     }
 
+    # 使用颜色格式化日志记录
     def format(self, record):
         """
         Format a log record with colors.
@@ -67,6 +69,7 @@ progress_logger.setLevel(logging.INFO)
 dev_mode = False
 
 
+# 设置开发模式
 def set_dev_mode(mode: bool):
     """
     Set the development mode.
@@ -81,6 +84,7 @@ def set_dev_mode(mode: bool):
     dev_mode = mode
 
 
+# 设置开发日志记录器的日志级别
 def set_level(level):
     """
     Set the logging level for the development logger.
@@ -91,6 +95,7 @@ def set_level(level):
     dev_logger.setLevel(level)
 
 
+# 记录调试消息
 def debug(message):
     """
     Log a debug message.
@@ -102,6 +107,7 @@ def debug(message):
         dev_logger.debug(message)
 
 
+# 记录信息消息
 def info(message):
     """
     Log an info message.
@@ -113,6 +119,7 @@ def info(message):
         dev_logger.info(message)
 
 
+# 记录警告消息
 def warning(message):
     """
     Log a warning message.
@@ -124,6 +131,7 @@ def warning(message):
         dev_logger.warning(message)
 
 
+# 记录错误消息
 def error(message):
     """
     Log an error message.
@@ -135,6 +143,7 @@ def error(message):
         dev_logger.error(message)
 
 
+# 记录严重消息并引发RuntimeError
 def critical(message):
     """
     Log a critical message and raise a RuntimeError.
@@ -149,6 +158,7 @@ def critical(message):
     raise RuntimeError(message)
 
 
+# 向进度日志记录器打印彩色消息
 def color_print(message, **kwargs):
     """
     Print a colored message to the progress logger.

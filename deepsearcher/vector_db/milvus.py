@@ -8,11 +8,14 @@ from deepsearcher.utils import log
 from deepsearcher.vector_db.base import BaseVectorDB, CollectionInfo, RetrievalResult
 
 
+# Milvus向量数据库实现类
 class Milvus(BaseVectorDB):
-    """Milvus class is a subclass of DB class."""
+    """Milvus类是向量数据库的子类实现。"""
 
+    # Milvus客户端实例
     client: MilvusClient = None
 
+    # 初始化Milvus客户端
     def __init__(
         self,
         default_collection: str = "deepsearcher",
@@ -25,26 +28,31 @@ class Milvus(BaseVectorDB):
         **kwargs,
     ):
         """
-        Initialize the Milvus client.
+        初始化Milvus客户端。
 
-        Args:
-            default_collection (str, optional): Default collection name. Defaults to "deepsearcher".
-            uri (str, optional): URI for connecting to Milvus server. Defaults to "http://localhost:19530".
-            token (str, optional): Authentication token for Milvus. Defaults to "root:Milvus".
-            user (str, optional): Username for authentication. Defaults to "".
-            password (str, optional): Password for authentication. Defaults to "".
-            db (str, optional): Database name. Defaults to "default".
-            hybrid (bool, optional): Whether to enable hybrid search. Defaults to False.
-            **kwargs: Additional keyword arguments to pass to the MilvusClient.
+        参数:
+            default_collection (str, 可选): 默认集合名称。默认为"deepsearcher"。
+            uri (str, 可选): 连接到Milvus服务器的URI。默认为"http://localhost:19530"。
+            token (str, 可选): Milvus的认证令牌。默认为"root:Milvus"。
+            user (str, 可选): 用于认证的用户名。默认为""。
+            password (str, 可选): 用于认证的密码。默认为""。
+            db (str, 可选): 数据库名称。默认为"default"。
+            hybrid (bool, 可选): 是否启用混合搜索。默认为False。
+            **kwargs: 传递给MilvusClient的其他关键字参数。
         """
+        # 调用父类构造函数
         super().__init__(default_collection)
+        # 设置默认集合名称
         self.default_collection = default_collection
+        # 创建Milvus客户端连接，设置30秒超时
         self.client = MilvusClient(
             uri=uri, user=user, password=password, token=token, db_name=db, timeout=30, **kwargs
         )
 
+        # 设置是否启用混合搜索
         self.hybrid = hybrid
 
+    # 初始化Milvus中的集合
     def init_collection(
         self,
         dim: int,
@@ -71,34 +79,47 @@ class Milvus(BaseVectorDB):
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
         """
+        # 检查集合名称是否为空，如果为空则使用默认集合名称
         if not collection:
             collection = self.default_collection
+        # 检查描述是否为None，如果是则设置为空字符串
         if description is None:
             description = ""
 
+        # 保存度量类型用于后续的相似度搜索
         self.metric_type = metric_type
 
+        # 尝试创建集合，包含错误处理逻辑
         try:
+            # 检查集合是否已存在，设置5秒超时
             has_collection = self.client.has_collection(collection, timeout=5)
+            # 如果强制新建集合且集合已存在，则先删除现有集合
             if force_new_collection and has_collection:
                 self.client.drop_collection(collection)
+            # 如果集合已存在且不强制新建，则直接返回
             elif has_collection:
                 return
+            # 创建集合模式定义，禁用动态字段，启用自动ID生成
             schema = self.client.create_schema(
                 enable_dynamic_field=False, auto_id=True, description=description
             )
+            # 添加主键字段，使用64位整数类型
             schema.add_field("id", DataType.INT64, is_primary=True)
+            # 添加向量嵌入字段，指定向量维度
             schema.add_field("embedding", DataType.FLOAT_VECTOR, dim=dim)
 
+            # 如果启用混合搜索，则添加文本字段用于全文检索
             if self.hybrid:
+                # 配置文本分析器参数：使用标准分词器和转小写过滤器
                 analyzer_params = {"tokenizer": "standard", "filter": ["lowercase"]}
+                # 添加文本字段，支持全文搜索和分析
                 schema.add_field(
-                    "text",
-                    DataType.VARCHAR,
-                    max_length=text_max_length,
-                    analyzer_params=analyzer_params,
-                    enable_match=True,
-                    enable_analyzer=True,
+                    "text",  # 字段名称
+                    DataType.VARCHAR,  # 字段类型：变长字符串
+                    max_length=text_max_length,  # 最大长度
+                    analyzer_params=analyzer_params,  # 分析器参数
+                    enable_match=True,  # 启用匹配功能
+                    enable_analyzer=True,  # 启用文本分析器
                 )
             else:
                 schema.add_field("text", DataType.VARCHAR, max_length=text_max_length)

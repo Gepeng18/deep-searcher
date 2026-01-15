@@ -8,6 +8,7 @@ from deepsearcher.loader.file_loader.base import BaseLoader
 from deepsearcher.utils import log
 
 
+# 使用unstructured-io库的无结构文档加载器
 class UnstructuredLoader(BaseLoader):
     """
     Loader for unstructured documents using the unstructured-io library.
@@ -16,6 +17,7 @@ class UnstructuredLoader(BaseLoader):
     processing pipeline, extracting text and metadata from complex document formats.
     """
 
+    # 初始化UnstructuredLoader
     def __init__(self):
         """
         Initialize the UnstructuredLoader.
@@ -27,6 +29,7 @@ class UnstructuredLoader(BaseLoader):
             shutil.rmtree(self.directory_with_results)
         os.makedirs(self.directory_with_results)
 
+    # 使用unstructured-io流水线处理文档
     def load_pipeline(self, input_path: str) -> List[Document]:
         """
         Process documents using the unstructured-io pipeline.
@@ -51,6 +54,7 @@ class UnstructuredLoader(BaseLoader):
         )
         from unstructured_ingest.processes.partitioner import PartitionerConfig
 
+        # 检查API环境变量是否已设置
         # Check if API environment variables are set
         api_key = os.getenv("UNSTRUCTURED_API_KEY")
         api_url = os.getenv("UNSTRUCTURED_API_URL")
@@ -91,6 +95,7 @@ class UnstructuredLoader(BaseLoader):
         documents = []
         for element in elements:
             metadata = element.metadata.to_dict()
+            # TODO 测试这个功能
             metadata["reference"] = input_path  # TODO test it
             documents.append(
                 Document(
@@ -100,6 +105,7 @@ class UnstructuredLoader(BaseLoader):
             )
         return documents
 
+    # 使用unstructured-io流水线加载单个文件
     def load_file(self, file_path: str) -> List[Document]:
         """
         Load a single file using the unstructured-io pipeline.
@@ -112,6 +118,7 @@ class UnstructuredLoader(BaseLoader):
         """
         return self.load_pipeline(file_path)
 
+    # 使用unstructured-io流水线从目录加载所有支持的文件
     def load_directory(self, directory: str) -> List[Document]:
         """
         Load all supported files from a directory using the unstructured-io pipeline.
@@ -124,6 +131,7 @@ class UnstructuredLoader(BaseLoader):
         """
         return self.load_pipeline(directory)
 
+    # 获取unstructured-io库支持的文件扩展名列表
     @property
     def supported_file_types(self) -> List[str]:
         """

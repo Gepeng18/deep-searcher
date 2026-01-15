@@ -5,7 +5,9 @@ from deepsearcher.llm.base import BaseLLM
 from deepsearcher.utils import log
 from deepsearcher.vector_db import RetrievalResult
 
-RAG_ROUTER_PROMPT = """Given a list of agent indexes and corresponding descriptions, each agent has a specific function. 
+# RAG路由器提示词
+# 给定代理索引列表和相应的描述，每个代理都有特定的功能。给定一个查询，选择最适合处理该查询的一个代理，并返回索引而不提供其他信息。
+RAG_ROUTER_PROMPT = """Given a list of agent indexes and corresponding descriptions, each agent has a specific function.
 Given a query, select only one agent that best matches the agent handling the query, and return the index without any other information.
 
 ## Question
@@ -18,6 +20,7 @@ Only return one agent index number that best matches the agent handling the quer
 """
 
 
+# 将查询路由到最合适RAG代理实现的类
 class RAGRouter(RAGAgent):
     """
     Routes queries to the most appropriate RAG agent implementation.
@@ -26,6 +29,7 @@ class RAGRouter(RAGAgent):
     which RAG agent implementation is best suited to handle it.
     """
 
+    # 初始化RAGRouter
     def __init__(
         self,
         llm: BaseLLM,
@@ -53,6 +57,7 @@ class RAGRouter(RAGAgent):
                     "Please provide agent descriptions or set __description__ attribute for each agent class."
                 )
 
+    # 路由查询到最合适的代理
     def _route(self, query: str) -> Tuple[RAGAgent, int]:
         description_str = "\n".join(
             [f"[{i + 1}]: {description}" for i, description in enumerate(self.agent_descriptions)]
@@ -62,6 +67,7 @@ class RAGRouter(RAGAgent):
         try:
             selected_agent_index = int(self.llm.remove_think(chat_response.content)) - 1
         except ValueError:
+            # 在某些推理LLM中，输出不是数字，而是一个解释字符串，最后带有数字。
             # In some reasoning LLM, the output is not a number, but a explaination string with a number in the end.
             log.warning(
                 "Parse int failed in RAGRouter, but will try to find the last digit as fallback."
@@ -86,6 +92,7 @@ class RAGRouter(RAGAgent):
         answer, retrieved_results, n_token_retrieval = agent.query(query, **kwargs)
         return answer, retrieved_results, n_token_router + n_token_retrieval
 
+    # 查找字符串中的最后一个数字
     def find_last_digit(self, string):
         for char in reversed(string):
             if char.isdigit():

@@ -43,10 +43,12 @@ class DoclingCrawler(BaseCrawler):
             IOError: If there is an error processing the URL.
         """
         try:
+            # 使用Docling将URL转换为文档
             # Use Docling to convert the URL to a document
             conversion_result = self.converter.convert(url)
             docling_document = conversion_result.document
 
+            # 使用层次分块对文档进行分块
             # Chunk the document using hierarchical chunking
             chunks = list(self.chunker.chunk(docling_document))
 

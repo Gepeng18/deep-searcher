@@ -7,6 +7,8 @@ from deepsearcher.llm.base import BaseLLM
 from deepsearcher.utils import log
 from deepsearcher.vector_db.base import BaseVectorDB, RetrievalResult, deduplicate_results
 
+# 总结提示词
+# 你是一个擅长内容分析的AI专家。请基于之前的查询和检索到的文档块，总结一个具体详细的答案或报告。
 SUMMARY_PROMPT = """You are a AI content analysis expert, good at summarizing content. Please summarize a specific and detailed answer or report based on the previous queries and the retrieved document chunks.
 
 Original Query: {query}
@@ -16,6 +18,7 @@ Related Chunks:
 """
 
 
+# 朴素检索增强生成代理实现
 class NaiveRAG(RAGAgent):
     """
     Naive Retrieval-Augmented Generation agent implementation.
@@ -24,6 +27,7 @@ class NaiveRAG(RAGAgent):
     documents and generating answers without complex processing or refinement steps.
     """
 
+    # 初始化NaiveRAG代理
     def __init__(
         self,
         llm: BaseLLM,
@@ -54,6 +58,7 @@ class NaiveRAG(RAGAgent):
             )
         self.text_window_splitter = text_window_splitter
 
+    # 从知识库检索相关文档
     def retrieve(self, query: str, **kwargs) -> Tuple[List[RetrievalResult], int, dict]:
         """
         Retrieve relevant documents from the knowledge base for the given query.
@@ -92,6 +97,7 @@ class NaiveRAG(RAGAgent):
         all_retrieved_results = deduplicate_results(all_retrieved_results)
         return all_retrieved_results, consume_tokens, {}
 
+    # 查询代理并基于检索文档生成答案
     def query(self, query: str, **kwargs) -> Tuple[str, List[RetrievalResult], int]:
         """
         Query the agent and generate an answer based on retrieved documents.

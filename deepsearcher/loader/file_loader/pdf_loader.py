@@ -5,6 +5,7 @@ from langchain_core.documents import Document
 from deepsearcher.loader.file_loader.base import BaseLoader
 
 
+# PDF文件加载器
 class PDFLoader(BaseLoader):
     """
     Loader for PDF files.
@@ -13,12 +14,14 @@ class PDFLoader(BaseLoader):
     converting them into Document objects for further processing.
     """
 
+    # 初始化PDFLoader
     def __init__(self):
         """
         Initialize the PDFLoader.
         """
         pass
 
+    # 加载PDF文件并转换为Document对象
     def load_file(self, file_path: str) -> List[Document]:
         """
         Load a PDF file and convert it to a Document object.
@@ -43,6 +46,7 @@ class PDFLoader(BaseLoader):
                 page_content = file.read()
                 return [Document(page_content=page_content, metadata={"reference": file_path})]
 
+    # 获取此加载器支持的文件扩展名列表
     @property
     def supported_file_types(self) -> List[str]:
         """

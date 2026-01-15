@@ -5,6 +5,7 @@ from typing import List
 from langchain_core.documents import Document
 
 
+# 文件加载器的抽象基类
 class BaseLoader(ABC):
     """
     Abstract base class for file loaders.
@@ -13,6 +14,7 @@ class BaseLoader(ABC):
     All specific file loaders should inherit from this class and implement the required methods.
     """
 
+    # 使用可选的关键字参数初始化加载器
     def __init__(self, **kwargs):
         """
         Initialize the loader with optional keyword arguments.
@@ -22,6 +24,7 @@ class BaseLoader(ABC):
         """
         pass
 
+    # 加载单个文件并转换为Document对象
     def load_file(self, file_path: str) -> List[Document]:
         """
         Load a single file and convert it to Document objects.
@@ -39,6 +42,7 @@ class BaseLoader(ABC):
         """
         pass
 
+    # 从目录及其子目录递归加载所有支持的文件
     def load_directory(self, directory: str) -> List[Document]:
         """
         Load all supported files from a directory and its subdirectories recursively.
@@ -59,6 +63,7 @@ class BaseLoader(ABC):
                         break
         return documents
 
+    # 获取此加载器支持的文件扩展名列表
     @property
     def supported_file_types(self) -> List[str]:
         """

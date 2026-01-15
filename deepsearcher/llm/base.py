@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Dict, List
 
 
+# 表示聊天模型响应的类
 class ChatResponse(ABC):
     """
     Represents a response from a chat model.
@@ -16,6 +17,7 @@ class ChatResponse(ABC):
         total_tokens: The total number of tokens used in the request and response.
     """
 
+    # 初始化ChatResponse对象
     def __init__(self, content: str, total_tokens: int) -> None:
         """
         Initialize a ChatResponse object.
@@ -27,6 +29,7 @@ class ChatResponse(ABC):
         self.content = content
         self.total_tokens = total_tokens
 
+    # 返回ChatResponse的字符串表示
     def __repr__(self) -> str:
         """
         Return a string representation of the ChatResponse.
@@ -37,6 +40,7 @@ class ChatResponse(ABC):
         return f"ChatResponse(content={self.content}, total_tokens={self.total_tokens})"
 
 
+# 语言模型实现的抽象基类
 class BaseLLM(ABC):
     """
     Abstract base class for language model implementations.
@@ -45,12 +49,14 @@ class BaseLLM(ABC):
     including methods for chat-based interactions and parsing responses.
     """
 
+    # 初始化BaseLLM对象
     def __init__(self):
         """
         Initialize a BaseLLM object.
         """
         pass
 
+    # 向语言模型发送聊天消息并获取响应
     def chat(self, messages: List[Dict]) -> ChatResponse:
         """
         Send a chat message to the language model and get a response.
@@ -64,6 +70,7 @@ class BaseLLM(ABC):
         """
         pass
 
+    # 使用ast.literal_eval将字符串响应解析为Python对象
     @staticmethod
     def literal_eval(response_content: str):
         """
@@ -111,6 +118,7 @@ class BaseLLM(ABC):
 
         return result
 
+    # 移除推理模型的思考内容
     @staticmethod
     def remove_think(response_content: str) -> str:
         # remove content between <think> and </think>, especial for reasoning model
